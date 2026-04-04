@@ -1,0 +1,150 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* 少女可爱风 - 柔和粉色背景 */
+    --background: 330 30% 96%;
+    --foreground: 330 30% 25%;
+    
+    /* 卡片背景 */
+    --card: 0 0% 100%;
+    --card-foreground: 330 30% 25%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 330 30% 25%;
+    
+    /* 主色调 - 樱花粉 */
+    --primary: 340 75% 65%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* 次要色 - 薰衣草紫 */
+    --secondary: 270 55% 68%;
+    --secondary-foreground: 0 0% 100%;
+    
+    --muted: 330 25% 92%;
+    --muted-foreground: 330 15% 45%;
+    
+    --accent: 340 75% 65%;
+    --accent-foreground: 0 0% 100%;
+    
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 330 30% 88%;
+    --input: 330 30% 88%;
+    --ring: 340 75% 65%;
+    --radius: 1rem;
+    
+    /* 可爱色系 - 用于方块 */
+    --cute-pink: 340 75% 72%;
+    --cute-purple: 270 55% 72%;
+    --cute-yellow: 45 85% 72%;
+    --cute-mint: 165 50% 65%;
+    --cute-peach: 20 75% 75%;
+    --cute-lavender: 250 55% 75%;
+    --cute-coral: 12 75% 70%;
+    
+    /* 玩家专属色 */
+    --player1: 340 75% 65%;
+    --player2: 270 55% 68%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    overflow: hidden;
+  }
+}
+
+@layer utilities {
+  .text-glow-pink {
+    text-shadow: 0 2px 10px hsl(340 75% 65% / 0.4);
+  }
+  
+  .text-glow-purple {
+    text-shadow: 0 2px 10px hsl(270 55% 68% / 0.4);
+  }
+  
+  .text-glow-yellow {
+    text-shadow: 0 2px 10px hsl(45 85% 60% / 0.5);
+  }
+  
+  .cute-border {
+    border: 3px solid hsl(var(--primary));
+    box-shadow: 0 4px 20px hsl(var(--primary) / 0.2);
+    border-radius: 1rem;
+  }
+  
+  .cute-border-purple {
+    border: 3px solid hsl(var(--secondary));
+    box-shadow: 0 4px 20px hsl(var(--secondary) / 0.2);
+    border-radius: 1rem;
+  }
+  
+  .cute-bg {
+    background: linear-gradient(135deg, 
+      hsl(340 60% 96%) 0%, 
+      hsl(270 50% 96%) 50%,
+      hsl(200 50% 96%) 100%);
+  }
+  
+  .box-glow-pink {
+    box-shadow: 0 4px 15px hsl(340 75% 65% / 0.3);
+  }
+  
+  .box-glow-purple {
+    box-shadow: 0 4px 15px hsl(270 55% 68% / 0.3);
+  }
+}
+
+/* 胜利效果 */
+.firework-particle {
+  position: absolute;
+  border-radius: 50%;
+  animation: firework 1.2s ease-out forwards;
+}
+
+@keyframes firework {
+  0% { transform: scale(0); opacity: 1; }
+  50% { opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+/* 心形漂浮 */
+.heart-float {
+  animation: heart-float 3s ease-in-out infinite;
+}
+
+@keyframes heart-float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-10px) scale(1.1); }
+}
+
+/* 可爱弹跳 */
+@keyframes bounce-cute {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-12px) scale(1.03); }
+}
+
+/* 摇摆 */
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+
+/* 星星闪烁 */
+.sparkle-bg {
+  background-image: 
+    radial-gradient(circle at 20% 30%, hsl(45 90% 85%) 2px, transparent 2px),
+    radial-gradient(circle at 80% 20%, hsl(340 70% 85%) 2px, transparent 2px),
+    radial-gradient(circle at 60% 80%, hsl(270 60% 85%) 2px, transparent 2px),
+    radial-gradient(circle at 10% 70%, hsl(45 90% 85%) 1px, transparent 1px),
+    radial-gradient(circle at 90% 60%, hsl(340 70% 85%) 1px, transparent 1px);
+}
