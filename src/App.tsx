@@ -1,18 +1,24 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useGameLogic } from '@/game/useGameLogic';
 import { GameBoard, NextPiece } from '@/components/GameBoard';
 import { ScorePanel } from '@/components/ScorePanel';
 import { ControlsHint } from '@/components/ControlsHint';
 import { VictoryOverlay } from '@/components/VictoryOverlay';
+import { GameOverOverlay } from '@/components/GameOverOverlay';
 import { cn } from '@/lib/utils';
 
-type GamePhase = 'waiting' | 'playing' | 'ended';
+type GameMode = 'solo' | 'versus';
+type GamePhase = 'menu' | 'playing' | 'ended';
+
+const NOOP = () => {};
 
 function App() {
-  const [gamePhase, setGamePhase] = useState<GamePhase>('waiting');
+  const [gameMode, setGameMode] = useState<GameMode>('solo');
+  const [gamePhase, setGamePhase] = useState<GamePhase>('menu');
   const [winner, setWinner] = useState<1 | 2 | null>(null);
   const [player1Over, setPlayer1Over] = useState(false);
   const [player2Over, setPlayer2Over] = useState(false);
+  const garbageSeedRef = useRef(Date.now());
 
   const isPlaying = gamePhase === 'playing';
 
@@ -24,19 +30,37 @@ function App() {
     setPlayer2Over(true);
   }, []);
 
-  const { gameState: p1State, resetGame: resetP1 } = useGameLogic(1, isPlaying && !player1Over, handlePlayer1GameOver);
-  const { gameState: p2State, resetGame: resetP2 } = useGameLogic(2, isPlaying && !player2Over, handlePlayer2GameOver);
+  const { gameState: p1State, resetGame: resetP1 } = useGameLogic(
+    1,
+    isPlaying && !player1Over,
+    handlePlayer1GameOver,
+    garbageSeedRef.current,
+    gameMode === 'solo',
+  );
+  const { gameState: p2State, resetGame: resetP2 } = useGameLogic(
+    2,
+    gameMode === 'versus' && isPlaying && !player2Over,
+    gameMode === 'versus' ? handlePlayer2GameOver : NOOP,
+    garbageSeedRef.current,
+  );
 
-  // 检查游戏结束 - 任意一方结束时，分数高的获胜
+  // 判定胜负
   useEffect(() => {
-    if (gamePhase === 'playing' && (player1Over || player2Over)) {
-      // 分数高的获胜
+    if (gamePhase !== 'playing') return;
+
+    if (gameMode === 'solo' && player1Over) {
+      setGamePhase('ended');
+    }
+
+    if (gameMode === 'versus' && player1Over && player2Over) {
       setWinner(p1State.score >= p2State.score ? 1 : 2);
       setGamePhase('ended');
     }
-  }, [player1Over, player2Over, gamePhase, p1State.score, p2State.score]);
+  }, [player1Over, player2Over, gamePhase, gameMode, p1State.score, p2State.score]);
 
-  const startGame = useCallback(() => {
+  const startGame = useCallback((mode: GameMode) => {
+    garbageSeedRef.current = Date.now();
+    setGameMode(mode);
     setGamePhase('playing');
     setPlayer1Over(false);
     setPlayer2Over(false);
@@ -45,9 +69,25 @@ function App() {
     resetP2();
   }, [resetP1, resetP2]);
 
+  const backToMenu = useCallback(() => {
+    setGamePhase('menu');
+    setPlayer1Over(false);
+    setPlayer2Over(false);
+    setWinner(null);
+    resetP1();
+    resetP2();
+  }, [resetP1, resetP2]);
+
   const handleRestart = useCallback(() => {
-    startGame();
-  }, [startGame]);
+    startGame(gameMode);
+  }, [startGame, gameMode]);
+
+  const getStatusText = () => {
+    if (gameMode === 'solo') return '游戏进行中';
+    if (player1Over && !player2Over) return '小粉已倒下，等待小紫结束...';
+    if (player2Over && !player1Over) return '小紫已倒下，等待小粉结束...';
+    return '对战进行中';
+  };
 
   return (
     <div className="min-h-screen cute-bg sparkle-bg relative overflow-hidden">
@@ -67,102 +107,153 @@ function App() {
           <span className="text-muted-foreground mx-2">💕</span>
           <span className="text-glow-purple text-secondary">对对碰</span>
         </h1>
-        <p className="text-muted-foreground mb-4 text-sm">分数高的获胜哦~</p>
 
-        {/* 游戏区域 */}
-        <div className="flex items-start gap-8">
-          {/* 玩家1 */}
-          <div className="flex gap-3 items-start">
-            <div className="flex flex-col gap-3 w-40">
-              <ScorePanel
-                score={p1State.score}
-                lines={p1State.lines}
-                level={p1State.level}
-                playerName="小粉 🎀"
+        {/* ===== 菜单界面 ===== */}
+        {gamePhase === 'menu' && (
+          <div className="flex flex-col items-center gap-4 mt-8">
+            <p className="text-muted-foreground text-sm mb-2">选择游戏模式</p>
+            <button
+              onClick={() => startGame('solo')}
+              className={cn(
+                'w-56 px-8 py-4 text-xl font-bold rounded-full transition-all duration-300',
+                'bg-gradient-to-r from-primary to-cute-peach text-white',
+                'hover:scale-105 hover:shadow-lg',
+                'focus:outline-none focus:ring-4 focus:ring-primary/30',
+              )}
+            >
+              🎮 单人模式
+            </button>
+            <button
+              onClick={() => startGame('versus')}
+              className={cn(
+                'w-56 px-8 py-4 text-xl font-bold rounded-full transition-all duration-300',
+                'bg-gradient-to-r from-primary to-secondary text-white',
+                'hover:scale-105 hover:shadow-lg',
+                'focus:outline-none focus:ring-4 focus:ring-primary/30',
+              )}
+            >
+              ⚔ 双人对战
+            </button>
+          </div>
+        )}
+
+        {/* ===== 单人模式 ===== */}
+        {gamePhase !== 'menu' && gameMode === 'solo' && (
+          <>
+            <p className="text-muted-foreground mb-4 text-sm">单人模式 - 挑战自己的最高分!</p>
+            <div className="flex gap-4 items-start">
+              <div className="flex flex-col gap-3 w-44">
+                <ScorePanel
+                  score={p1State.score}
+                  lines={p1State.lines}
+                  level={p1State.level}
+                  playerName="玩家 🎀"
+                  playerId={1}
+                />
+                <NextPiece type={p1State.nextPiece} playerId={1} />
+                <ControlsHint playerId={1} solo />
+              </div>
+              <GameBoard
+                board={p1State.board}
+                currentPiece={p1State.currentPiece}
                 playerId={1}
+                isGameOver={p1State.isGameOver}
               />
-              <NextPiece type={p1State.nextPiece} playerId={1} />
-              <ControlsHint playerId={1} />
             </div>
-            <GameBoard
-              board={p1State.board}
-              currentPiece={p1State.currentPiece}
-              playerId={1}
-              isGameOver={p1State.isGameOver}
-            />
-          </div>
+          </>
+        )}
 
-          {/* VS 分隔 */}
-          <div className="flex flex-col items-center justify-center py-10">
-            <div className="text-4xl font-black text-primary/30 tracking-widest">
-              VS
-            </div>
-            <div className="mt-4 text-center">
-              <div className="text-muted-foreground text-xs mb-1">
-                当前比分 ✨
+        {/* ===== 双人模式 ===== */}
+        {gamePhase !== 'menu' && gameMode === 'versus' && (
+          <>
+            <p className="text-muted-foreground mb-4 text-sm">双方都结束后，分数高的获胜~</p>
+            <div className="flex items-start gap-8">
+              {/* 玩家1 */}
+              <div className="flex gap-3 items-start">
+                <div className="flex flex-col gap-3 w-40">
+                  <ScorePanel
+                    score={p1State.score}
+                    lines={p1State.lines}
+                    level={p1State.level}
+                    playerName="小粉 🎀"
+                    playerId={1}
+                  />
+                  <NextPiece type={p1State.nextPiece} playerId={1} />
+                  <ControlsHint playerId={1} />
+                </div>
+                <GameBoard
+                  board={p1State.board}
+                  currentPiece={p1State.currentPiece}
+                  playerId={1}
+                  isGameOver={p1State.isGameOver}
+                />
               </div>
-              <div className="flex items-center gap-3 text-2xl font-bold">
-                <span className="text-glow-pink text-primary tabular-nums">{p1State.score}</span>
-                <span className="text-muted-foreground">:</span>
-                <span className="text-glow-purple text-secondary tabular-nums">{p2State.score}</span>
+
+              {/* VS 分隔 */}
+              <div className="flex flex-col items-center justify-center py-10">
+                <div className="text-4xl font-black text-primary/30 tracking-widest">VS</div>
+                <div className="mt-4 text-center">
+                  <div className="text-muted-foreground text-xs mb-1">当前比分 ✨</div>
+                  <div className="flex items-center gap-3 text-2xl font-bold">
+                    <span className="text-glow-pink text-primary tabular-nums">{p1State.score}</span>
+                    <span className="text-muted-foreground">:</span>
+                    <span className="text-glow-purple text-secondary tabular-nums">{p2State.score}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 玩家2 */}
+              <div className="flex gap-3 items-start">
+                <GameBoard
+                  board={p2State.board}
+                  currentPiece={p2State.currentPiece}
+                  playerId={2}
+                  isGameOver={p2State.isGameOver}
+                />
+                <div className="flex flex-col gap-3 w-40">
+                  <ScorePanel
+                    score={p2State.score}
+                    lines={p2State.lines}
+                    level={p2State.level}
+                    playerName="小紫 🦄"
+                    playerId={2}
+                  />
+                  <NextPiece type={p2State.nextPiece} playerId={2} />
+                  <ControlsHint playerId={2} />
+                </div>
               </div>
             </div>
-          </div>
-
-          {/* 玩家2 */}
-          <div className="flex gap-3 items-start">
-            <GameBoard
-              board={p2State.board}
-              currentPiece={p2State.currentPiece}
-              playerId={2}
-              isGameOver={p2State.isGameOver}
-            />
-            <div className="flex flex-col gap-3 w-40">
-              <ScorePanel
-                score={p2State.score}
-                lines={p2State.lines}
-                level={p2State.level}
-                playerName="小紫 🦄"
-                playerId={2}
-              />
-              <NextPiece type={p2State.nextPiece} playerId={2} />
-              <ControlsHint playerId={2} />
-            </div>
-          </div>
-        </div>
-
-        {/* 开始游戏按钮 */}
-        {gamePhase === 'waiting' && (
-          <button
-            onClick={startGame}
-            className={cn(
-              'mt-6 px-10 py-3 text-xl font-bold rounded-full transition-all duration-300',
-              'bg-gradient-to-r from-primary to-secondary text-white',
-              'hover:scale-105 hover:shadow-lg',
-              'focus:outline-none focus:ring-4 focus:ring-primary/30',
-              'animate-pulse-cute'
-            )}
-          >
-            开始对战 💪
-          </button>
+          </>
         )}
 
         {/* 游戏中提示 */}
         {gamePhase === 'playing' && (
           <div className="mt-6 text-muted-foreground text-base animate-float flex items-center gap-2">
-            <span>对战进行中</span>
+            <span>{getStatusText()}</span>
             <span className="animate-wiggle">🎮</span>
           </div>
         )}
       </div>
 
-      {/* 胜利覆盖层 */}
-      {gamePhase === 'ended' && winner && (
+      {/* 双人胜利覆盖层 */}
+      {gamePhase === 'ended' && gameMode === 'versus' && winner && (
         <VictoryOverlay
           winner={winner}
           player1Score={p1State.score}
           player2Score={p2State.score}
           onRestart={handleRestart}
+          onBackToMenu={backToMenu}
+        />
+      )}
+
+      {/* 单人结束覆盖层 */}
+      {gamePhase === 'ended' && gameMode === 'solo' && (
+        <GameOverOverlay
+          score={p1State.score}
+          lines={p1State.lines}
+          level={p1State.level}
+          onRestart={handleRestart}
+          onBackToMenu={backToMenu}
         />
       )}
     </div>

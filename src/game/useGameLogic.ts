@@ -11,9 +11,12 @@ import {
   calculateScore,
   calculateLevel,
   calculateSpeed,
+  generateGarbageRows,
+  addGarbageRows,
+  getGarbageCountForLevel,
 } from './tetris';
 
-export function useGameLogic(playerId: 1 | 2, isActive: boolean, onGameOver: () => void) {
+export function useGameLogic(playerId: 1 | 2, isActive: boolean, onGameOver: () => void, garbageSeed: number, solo = false) {
   const [gameState, setGameState] = useState<GameState>(() => ({
     board: createEmptyBoard(),
     currentPiece: null,
@@ -27,6 +30,25 @@ export function useGameLogic(playerId: 1 | 2, isActive: boolean, onGameOver: () 
 
   const gameLoopRef = useRef<number | null>(null);
   const lastDropRef = useRef<number>(0);
+  const prevLevelRef = useRef<number>(0);
+
+  // 升级时添加垃圾行
+  useEffect(() => {
+    const currentLevel = gameState.level;
+    if (currentLevel > prevLevelRef.current && !gameState.isGameOver) {
+      const garbageCount = getGarbageCountForLevel(currentLevel);
+      if (garbageCount > 0) {
+        // 用 level * garbageSeed 做种子，双方相同种子 = 相同空格位置
+        const seed = currentLevel * 1000 + garbageSeed;
+        const garbageRows = generateGarbageRows(garbageCount, seed);
+        setGameState(prev => ({
+          ...prev,
+          board: addGarbageRows(prev.board, garbageRows),
+        }));
+      }
+    }
+    prevLevelRef.current = currentLevel;
+  }, [gameState.level, gameState.isGameOver, garbageSeed]);
 
   // 生成新方块
   const spawnPiece = useCallback(() => {
@@ -143,6 +165,7 @@ export function useGameLogic(playerId: 1 | 2, isActive: boolean, onGameOver: () 
 
   // 重置游戏
   const resetGame = useCallback(() => {
+    prevLevelRef.current = 0;
     setGameState({
       board: createEmptyBoard(),
       currentPiece: null,
@@ -200,9 +223,7 @@ export function useGameLogic(playerId: 1 | 2, isActive: boolean, onGameOver: () 
     if (!isActive) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // 玩家1: WASD + Space
-      // 玩家2: 方向键 + Enter
-      if (playerId === 1) {
+      if (playerId === 1 && !solo) {
         switch (e.key.toLowerCase()) {
           case 'a':
             movePiece(-1, 0);

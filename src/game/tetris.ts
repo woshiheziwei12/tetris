@@ -194,6 +194,38 @@ export function calculateSpeed(level: number): number {
   return Math.max(100, 1000 - level * 100);
 }
 
+// 生成垃圾行（带一个随机空格），使用种子确保双方公平
+export function generateGarbageRows(count: number, seed: number): CellColor[][] {
+  const garbageColor: CellColor = 'purple';
+  const rows: CellColor[][] = [];
+  let s = seed;
+
+  for (let i = 0; i < count; i++) {
+    // 简易伪随机，确保同种子产生相同结果
+    s = (s * 16807 + 0) % 2147483647;
+    const gapIndex = s % BOARD_WIDTH;
+    const row: CellColor[] = Array(BOARD_WIDTH).fill(garbageColor);
+    row[gapIndex] = null;
+    rows.push(row);
+  }
+
+  return rows;
+}
+
+// 将垃圾行插入棋盘底部
+export function addGarbageRows(board: CellColor[][], garbageRows: CellColor[][]): CellColor[][] {
+  const newBoard = [...board.slice(garbageRows.length), ...garbageRows];
+  return newBoard;
+}
+
+// 根据等级计算垃圾行数
+export function getGarbageCountForLevel(level: number): number {
+  if (level <= 0) return 0;
+  if (level <= 2) return 1;
+  if (level <= 4) return 2;
+  return 3;
+}
+
 // 嘲讽文字
 export const TAUNT_MESSAGES = [
   "你太菜了！",

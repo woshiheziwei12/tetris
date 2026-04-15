@@ -6,6 +6,7 @@ interface VictoryOverlayProps {
   player1Score: number;
   player2Score: number;
   onRestart: () => void;
+  onBackToMenu: () => void;
 }
 
 interface Particle {
@@ -36,7 +37,7 @@ function getRandomTaunt(): string {
   return CUTE_TAUNTS[Math.floor(Math.random() * CUTE_TAUNTS.length)];
 }
 
-export function VictoryOverlay({ winner, player1Score, player2Score, onRestart }: VictoryOverlayProps) {
+export function VictoryOverlay({ winner, player1Score, player2Score, onRestart, onBackToMenu }: VictoryOverlayProps) {
   const [particles, setParticles] = useState<Particle[]>([]);
   const [taunt, setTaunt] = useState('');
 
@@ -149,18 +150,31 @@ export function VictoryOverlay({ winner, player1Score, player2Score, onRestart }
           "{taunt}" 😝
         </div>
 
-        {/* 重新开始按钮 */}
-        <button
-          onClick={onRestart}
-          className={cn(
-            'px-10 py-4 text-xl font-bold rounded-full transition-all duration-300',
-            'bg-gradient-to-r from-primary to-secondary text-white',
-            'hover:scale-105 hover:shadow-lg',
-            'focus:outline-none focus:ring-4 focus:ring-primary/30'
-          )}
-        >
-          再来一局 💪
-        </button>
+        {/* 按钮 */}
+        <div className="flex flex-col items-center gap-3">
+          <button
+            onClick={onRestart}
+            className={cn(
+              'w-48 px-10 py-4 text-xl font-bold rounded-full transition-all duration-300',
+              'bg-gradient-to-r from-primary to-secondary text-white',
+              'hover:scale-105 hover:shadow-lg',
+              'focus:outline-none focus:ring-4 focus:ring-primary/30'
+            )}
+          >
+            再来一局 💪
+          </button>
+          <button
+            onClick={onBackToMenu}
+            className={cn(
+              'w-48 px-8 py-3 text-base font-medium rounded-full transition-all duration-300',
+              'bg-muted text-foreground',
+              'hover:scale-105 hover:bg-muted/80',
+              'focus:outline-none',
+            )}
+          >
+            返回菜单
+          </button>
+        </div>
       </div>
     </div>
   );

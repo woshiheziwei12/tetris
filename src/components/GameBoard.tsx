@@ -49,7 +49,7 @@ export function GameBoard({ board, currentPiece, playerId, isGameOver }: GameBoa
             <div
               key={`${y}-${x}`}
               className={cn(
-                'w-[30px] h-[30px] border border-white/60',
+                'w-[30px] h-[30px] border border-white/60 rounded-[4px]',
                 cell ? colorMap[cell] : 'bg-muted/25'
               )}
             />
@@ -90,7 +90,7 @@ export function NextPiece({ type, playerId }: NextPieceProps) {
               <div
                 key={x}
                 className={cn(
-                  'w-5 h-5',
+                  'w-5 h-5 rounded-[3px]',
                   cell ? colorMap[tetromino.color] : 'bg-transparent'
                 )}
               />

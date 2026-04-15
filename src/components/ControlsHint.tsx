@@ -2,23 +2,26 @@ import { cn } from '@/lib/utils';
 
 interface ControlsHintProps {
   playerId: 1 | 2;
+  solo?: boolean;
 }
 
-export function ControlsHint({ playerId }: ControlsHintProps) {
+export function ControlsHint({ playerId, solo = false }: ControlsHintProps) {
   const borderClass = playerId === 1 ? 'cute-border' : 'cute-border-purple';
   
-  const controls = playerId === 1 
+  const useArrows = playerId === 2 || solo;
+
+  const controls = useArrows
     ? [
-        { key: 'W', action: '旋转' },
-        { key: 'A/D', action: '移动' },
-        { key: 'S', action: '下落' },
-        { key: 'Space', action: '硬降' },
-      ]
-    : [
         { key: '↑', action: '旋转' },
         { key: '←/→', action: '移动' },
         { key: '↓', action: '下落' },
         { key: 'Shift', action: '硬降' },
+      ]
+    : [
+        { key: 'W', action: '旋转' },
+        { key: 'A/D', action: '移动' },
+        { key: 'S', action: '下落' },
+        { key: 'Space', action: '硬降' },
       ];
 
   return (
