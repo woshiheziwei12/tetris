@@ -5,6 +5,7 @@ import { ScorePanel } from '@/components/ScorePanel';
 import { ControlsHint } from '@/components/ControlsHint';
 import { VictoryOverlay } from '@/components/VictoryOverlay';
 import { GameOverOverlay } from '@/components/GameOverOverlay';
+import { MusicPlayer } from '@/components/MusicPlayer';
 import { cn } from '@/lib/utils';
 
 type GameMode = 'solo' | 'versus';
@@ -256,6 +257,8 @@ function App() {
           onBackToMenu={backToMenu}
         />
       )}
+      {/* 音乐播放器 */}
+      <MusicPlayer />
     </div>
   );
 }

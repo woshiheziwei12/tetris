@@ -1,0 +1,7 @@
+把 .mp3 文件放到这个目录即可自动识别播放。
+
+然后修改 src/config/musicList.ts 中的文件名列表。
+
+示例：
+  public/music/bgm1.mp3
+  public/music/bgm2.mp3
