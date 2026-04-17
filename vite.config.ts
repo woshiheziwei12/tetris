@@ -11,7 +11,7 @@ export default defineConfig({
       renderLegacyChunks: true,
     }),
   ],
-  base: './',
+  base: '/tetris/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
