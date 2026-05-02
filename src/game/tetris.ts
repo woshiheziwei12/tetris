@@ -94,10 +94,30 @@ export function createEmptyBoard(): CellColor[][] {
   return Array(BOARD_HEIGHT).fill(null).map(() => Array(BOARD_WIDTH).fill(null));
 }
 
-// 随机获取方块类型
+// 随机获取方块类型（无种子，仅用于非竞技场景）
 export function getRandomTetromino(): TetrominoType {
   const types: TetrominoType[] = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
   return types[Math.floor(Math.random() * types.length)];
+}
+
+// 种子伪随机数生成器，确保双方方块序列一致
+export class SeededRandom {
+  private seed: number;
+
+  constructor(seed: number) {
+    this.seed = seed % 2147483647;
+    if (this.seed <= 0) this.seed += 2147483646;
+  }
+
+  next(): number {
+    this.seed = (this.seed * 16807) % 2147483647;
+    return (this.seed - 1) / 2147483646;
+  }
+
+  nextTetromino(): TetrominoType {
+    const types: TetrominoType[] = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
+    return types[Math.floor(this.next() * types.length)];
+  }
 }
 
 // 创建新方块

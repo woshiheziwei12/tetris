@@ -60,14 +60,15 @@ function App() {
   }, [player1Over, player2Over, gamePhase, gameMode, p1State.score, p2State.score]);
 
   const startGame = useCallback((mode: GameMode) => {
-    garbageSeedRef.current = Date.now();
+    const seed = Date.now();
+    garbageSeedRef.current = seed;
     setGameMode(mode);
     setGamePhase('playing');
     setPlayer1Over(false);
     setPlayer2Over(false);
     setWinner(null);
-    resetP1();
-    resetP2();
+    resetP1(seed);
+    resetP2(seed);
   }, [resetP1, resetP2]);
 
   const backToMenu = useCallback(() => {

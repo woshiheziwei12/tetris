@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import {
   GameState,
   createEmptyBoard,
-  getRandomTetromino,
+  SeededRandom,
   createPiece,
   rotatePiece,
   checkCollision,
@@ -17,10 +17,12 @@ import {
 } from './tetris';
 
 export function useGameLogic(playerId: 1 | 2, isActive: boolean, onGameOver: () => void, garbageSeed: number, solo = false) {
+  const rngRef = useRef(new SeededRandom(garbageSeed));
+
   const [gameState, setGameState] = useState<GameState>(() => ({
     board: createEmptyBoard(),
     currentPiece: null,
-    nextPiece: getRandomTetromino(),
+    nextPiece: rngRef.current.nextTetromino(),
     score: 0,
     lines: 0,
     level: 0,
@@ -50,9 +52,11 @@ export function useGameLogic(playerId: 1 | 2, isActive: boolean, onGameOver: () 
     prevLevelRef.current = currentLevel;
   }, [gameState.level, gameState.isGameOver, garbageSeed]);
 
-  // 生成新方块
+  // 生成新方块（防止重入：仅当 currentPiece 为 null 时生效）
   const spawnPiece = useCallback(() => {
     setGameState(prev => {
+      if (prev.currentPiece || prev.isGameOver) return prev;
+
       const newPiece = createPiece(prev.nextPiece);
       
       if (checkCollision(prev.board, newPiece)) {
@@ -62,7 +66,7 @@ export function useGameLogic(playerId: 1 | 2, isActive: boolean, onGameOver: () 
       return {
         ...prev,
         currentPiece: newPiece,
-        nextPiece: getRandomTetromino(),
+        nextPiece: rngRef.current.nextTetromino(),
       };
     });
   }, []);
@@ -163,13 +167,16 @@ export function useGameLogic(playerId: 1 | 2, isActive: boolean, onGameOver: () 
     });
   }, []);
 
-  // 重置游戏
-  const resetGame = useCallback(() => {
+  // 重置游戏（可传入新种子以保证双方方块序列一致）
+  const resetGame = useCallback((newSeed?: number) => {
+    if (newSeed !== undefined) {
+      rngRef.current = new SeededRandom(newSeed);
+    }
     prevLevelRef.current = 0;
     setGameState({
       board: createEmptyBoard(),
       currentPiece: null,
-      nextPiece: getRandomTetromino(),
+      nextPiece: rngRef.current.nextTetromino(),
       score: 0,
       lines: 0,
       level: 0,
